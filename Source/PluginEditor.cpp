@@ -208,7 +208,8 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audi
       param->addListener(this);
     }
 
-    // updateChain();
+    updateChain();
+
     startTimerHz(60);
 
 }
@@ -233,7 +234,14 @@ void ResponseCurveComponent::timerCallback()
     {
         DBG("params changed");
         //update the monochain
-        //updateChain();
+        updateChain();
+       //signal a repaint
+        repaint();
+    }
+}
+
+void ResponseCurveComponent::updateChain()
+{
         auto chainSettings = getChainSettings(audioProcessor.apvts);
         auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
         updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
@@ -243,25 +251,9 @@ void ResponseCurveComponent::timerCallback()
 
         updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
         updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
-            //signal a repaint
-        repaint();
-    }
+
+
 }
-
-// void ResponseCurveComponent::updateChain()
-// {
-//         auto chainSettings = getChainSettings(audioProcessor.apvts);
-//         auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-//         updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
-
-//         auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-//         auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-
-//         updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
-//         updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
-
-
-// }
 
 
 //==============================================================================
@@ -387,7 +379,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       addAndMakeVisible(comp);
     }
 
-    setSize (600, 400);
+    setSize (600, 480);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
@@ -407,9 +399,14 @@ void SimpleEQAudioProcessorEditor::resized()
     // subcomponents in your editor..
 
     auto bounds = getLocalBounds();
-    auto responseArea = bounds.removeFromTop(bounds.getHeight()*0.33);
+
+    float hRatio = 25.f/100.f; //JUCE_LIVE_CONSTANT(33)/100.f;
+
+    auto responseArea = bounds.removeFromTop(bounds.getHeight()*hRatio);
 
     responseCurveComponent.setBounds(responseArea);
+
+    bounds.removeFromTop(5);
 
     // responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
 
